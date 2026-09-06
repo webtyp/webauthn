@@ -5,7 +5,7 @@ package webauthn
 import (
 	"syscall/js"
 
-	"github.com/tinywasm/await"
+	"webtyp.com/await"
 )
 
 // Available reports whether the browser exposes the WebAuthn API at all.

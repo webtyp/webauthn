@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	. "github.com/tinywasm/webauthn"
+	. "webtyp.com/webauthn"
 )
 
 func TestErrorStrings(t *testing.T) {

@@ -1,6 +1,6 @@
 //go:build wasm
 
-// Package webauthn_test exercises the public API of github.com/tinywasm/webauthn
+// Package webauthn_test exercises the public API of webtyp.com/webauthn
 // against a mocked browser environment (navigator.credentials, PublicKeyCredential).
 // Shared setup lives here; every ceremony test installs its own fresh mock.
 package webauthn_test
@@ -9,7 +9,7 @@ import (
 	"syscall/js"
 	"testing"
 
-	"github.com/tinywasm/base64"
+	"webtyp.com/base64"
 )
 
 // browser replaces the browser globals the library reads with mock objects.
@@ -104,7 +104,7 @@ func (b *browser) stubPlatformAuthenticatorAvailable(handler func() js.Value) {
 }
 
 // resolvedPromise returns a then-able that settles immediately with v. It
-// implements the then/catch surface that tinywasm/await relies on.
+// implements the then/catch surface that webtyp/await relies on.
 func resolvedPromise(v js.Value) js.Value {
 	p := js.Global().Get("Object").New()
 	p.Set("then", js.FuncOf(func(_ js.Value, args []js.Value) any {

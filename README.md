@@ -28,7 +28,7 @@ package main
 import (
 	"syscall/js"
 
-	"github.com/tinywasm/webauthn"
+	"webtyp.com/webauthn"
 )
 
 func onRegisterButtonClick(this js.Value, args []js.Value) any {

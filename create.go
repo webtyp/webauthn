@@ -5,8 +5,8 @@ package webauthn
 import (
 	"syscall/js"
 
-	"github.com/tinywasm/await"
-	"github.com/tinywasm/base64"
+	"webtyp.com/await"
+	"webtyp.com/base64"
 )
 
 // CreateOptions describes a registration ceremony.

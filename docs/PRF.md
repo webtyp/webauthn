@@ -6,7 +6,7 @@ The PRF (`hmac-secret`) extension is a WebAuthn extension built on CTAP2. It ena
 
 Unlike standard WebAuthn assertion signatures (which change on every use due to random challenges and incrementing sign counters), the PRF extension returns **32 deterministic bytes** for a given constant salt.
 
-`tinywasm/webauthn` exposes this via `GetOptions.PRFSalt`. Higher-level modules (such as `tinywasm/keyring`) use these 32 bytes as a Key Encryption Key (KEK) to wrap locally encrypted secrets.
+`webtyp/webauthn` exposes this via `GetOptions.PRFSalt`. Higher-level modules (such as `webtyp/keyring`) use these 32 bytes as a Key Encryption Key (KEK) to wrap locally encrypted secrets.
 
 ## Current Platform Support Matrix
 

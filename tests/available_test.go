@@ -6,7 +6,7 @@ import (
 	"syscall/js"
 	"testing"
 
-	. "github.com/tinywasm/webauthn"
+	. "webtyp.com/webauthn"
 )
 
 func TestAvailable(t *testing.T) {

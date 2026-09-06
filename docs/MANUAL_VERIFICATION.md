@@ -8,7 +8,7 @@ WebAuthn browser APIs interact directly with platform authenticators and securit
 
 ### Prerequisites
 - Google Chrome browser.
-- A local HTTP server hosting a WebAssembly application compiled with `tinywasm/webauthn`.
+- A local HTTP server hosting a WebAssembly application compiled with `webtyp/webauthn`.
 
 ### Setup Steps
 1. Open Chrome and navigate to your application URL (e.g. `http://localhost:8080`).
