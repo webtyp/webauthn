@@ -190,6 +190,17 @@ func credentialObject(cfg credentialConfig) js.Value {
 	}
 	if cfg.attestation != nil {
 		resp.Set("attestationObject", bufferOf(cfg.attestation))
+
+		// Add mock level 2 methods for create responses
+		resp.Set("getPublicKey", js.FuncOf(func(_ js.Value, args []js.Value) any {
+			return bufferOf([]byte("mock-public-key"))
+		}))
+		resp.Set("getPublicKeyAlgorithm", js.FuncOf(func(_ js.Value, args []js.Value) any {
+			return -7
+		}))
+		resp.Set("getAuthenticatorData", js.FuncOf(func(_ js.Value, args []js.Value) any {
+			return bufferOf([]byte("mock-authenticator-data"))
+		}))
 	}
 	if cfg.authData != nil {
 		resp.Set("authenticatorData", bufferOf(cfg.authData))

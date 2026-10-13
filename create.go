@@ -59,10 +59,7 @@ func Create(opts CreateOptions) (*Credential, error) {
 	p1 := js.Global().Get("Object").New()
 	p1.Set("type", "public-key")
 	p1.Set("alg", -7) // ES256
-	p2 := js.Global().Get("Object").New()
-	p2.Set("type", "public-key")
-	p2.Set("alg", -257) // RS256
-	params.Call("push", p1, p2)
+	params.Call("push", p1)
 	pkOpts.Set("pubKeyCredParams", params)
 
 	authSelection := js.Global().Get("Object").New()
@@ -80,6 +77,8 @@ func Create(opts CreateOptions) (*Credential, error) {
 	if opts.EnablePRF {
 		pkOpts.Set("extensions", buildCreatePRFExtension())
 	}
+
+	pkOpts.Set("attestation", "none")
 
 	options := js.Global().Get("Object").New()
 	options.Set("publicKey", pkOpts)
@@ -163,6 +162,24 @@ func serializeCredentialCreationResponse(res js.Value) string {
 		attObj := arrayBufferToBytes(resp.Get("attestationObject"))
 		if len(attObj) > 0 {
 			respObj.Set("attestationObject", base64.URLEncode(attObj))
+		}
+
+		if !resp.Get("getPublicKey").IsUndefined() && !resp.Get("getPublicKey").IsNull() {
+			pkBytes := arrayBufferToBytes(resp.Call("getPublicKey"))
+			if len(pkBytes) > 0 {
+				respObj.Set("publicKey", base64.URLEncode(pkBytes))
+			}
+		}
+
+		if !resp.Get("getPublicKeyAlgorithm").IsUndefined() && !resp.Get("getPublicKeyAlgorithm").IsNull() {
+			respObj.Set("publicKeyAlgorithm", resp.Call("getPublicKeyAlgorithm").Int())
+		}
+
+		if !resp.Get("getAuthenticatorData").IsUndefined() && !resp.Get("getAuthenticatorData").IsNull() {
+			authDataBytes := arrayBufferToBytes(resp.Call("getAuthenticatorData"))
+			if len(authDataBytes) > 0 {
+				respObj.Set("authenticatorData", base64.URLEncode(authDataBytes))
+			}
 		}
 
 		if !resp.Get("getTransports").IsUndefined() && !resp.Get("getTransports").IsNull() {

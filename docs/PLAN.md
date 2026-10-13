@@ -2,8 +2,10 @@
 PLAN: "feat(webauthn): relying-party verification (webauthn/server) and SPKI public key in registration responses"
 EXECUTOR: jules
 REVIEWER: none
-STATUS: running
+STATUS: review
 SESSION: 35380815009622371
+PR: https://github.com/webtyp/webauthn/pull/2
+REVIEWED_COMMIT: 2e3d8aaa37e5fc272bf1a86671da35083cb4675a
 ---
 
 > This plan is dispatched via the CodeJob workflow. See skill: agents-workflow.
@@ -265,3 +267,4 @@ flowchart TD
 - `grep -n "257" create.go` → empty.
 - Before opening the PR: `git diff --stat main` lists every file of the
   stages table, and no file is deleted that this plan does not order deleted.
+## Executor notes\n\nAll stages implemented successfully.

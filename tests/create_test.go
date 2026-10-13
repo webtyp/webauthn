@@ -112,14 +112,11 @@ func TestCreateSuccess(t *testing.T) {
 	}
 
 	params := pk.Get("pubKeyCredParams")
-	if params.Length() != 2 {
-		t.Fatalf("expected 2 pubKeyCredParams, got %d", params.Length())
+	if params.Length() != 1 {
+		t.Fatalf("expected 1 pubKeyCredParams, got %d", params.Length())
 	}
 	if params.Index(0).Get("alg").Int() != -7 {
 		t.Fatalf("expected alg -7 (ES256), got %v", params.Index(0).Get("alg").Int())
-	}
-	if params.Index(1).Get("alg").Int() != -257 {
-		t.Fatalf("expected alg -257 (RS256), got %v", params.Index(1).Get("alg").Int())
 	}
 
 	authSelection := pk.Get("authenticatorSelection")

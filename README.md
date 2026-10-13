@@ -14,6 +14,44 @@ A passkey's private key never leaves the authenticator. During standard authenti
 >
 > **Salt Warning:** Changing the salt changes the derived key and renders previously encrypted data permanently unrecoverable.
 
+## Verifying on the server
+
+The `webauthn/server` package provides verification of WebAuthn responses, ensuring that the relying party checks user presence, user verification, signature validity, and sign count. It supports ES256 only.
+
+```go
+package main
+
+import (
+	"fmt"
+	"webtyp.com/webauthn/server"
+)
+
+var rp = server.RelyingParty{
+	ID:     "example.com",
+	Origin: "https://example.com",
+}
+
+func verifyRegistration(rawResponse string, issuedChallenge []byte) {
+	registration, err := rp.VerifyRegistration(rawResponse, issuedChallenge)
+	if err != nil {
+		fmt.Println("Registration failed:", err)
+		return
+	}
+	fmt.Printf("Stored Credential ID: %x\n", registration.CredentialID)
+	// Store registration.PublicKey and registration.SignCount for this user
+}
+
+func verifyAssertion(rawResponse string, issuedChallenge []byte, stored server.StoredCredential) {
+	newCount, err := rp.VerifyAssertion(rawResponse, issuedChallenge, stored)
+	if err != nil {
+		fmt.Println("Assertion failed:", err)
+		return
+	}
+	fmt.Printf("New Sign Count: %d\n", newCount)
+	// Update stored.SignCount with newCount
+}
+```
+
 ## Caller Requirements — Gesture & Goroutine Rules
 
 > **IMPORTANT:**
