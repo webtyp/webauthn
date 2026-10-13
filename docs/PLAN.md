@@ -2,6 +2,8 @@
 PLAN: "feat(webauthn): relying-party verification (webauthn/server) and SPKI public key in registration responses"
 EXECUTOR: jules
 REVIEWER: none
+STATUS: running
+SESSION: 35380815009622371
 ---
 
 > This plan is dispatched via the CodeJob workflow. See skill: agents-workflow.
