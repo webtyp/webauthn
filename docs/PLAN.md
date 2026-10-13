@@ -265,3 +265,4 @@ flowchart TD
 - `grep -n "257" create.go` → empty.
 - Before opening the PR: `git diff --stat main` lists every file of the
   stages table, and no file is deleted that this plan does not order deleted.
+## Executor notes\n\nAll stages implemented successfully.
