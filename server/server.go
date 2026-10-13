@@ -51,19 +51,27 @@ const (
 
 // isP256SPKI checks if the DER is exactly an uncompressed P-256 SPKI public key.
 // Browsers always emit exactly this shape for ES256 (-7).
+// p256SPKIPrefix is the fixed SPKI header of an uncompressed P-256 public key
+// (id-ecPublicKey, prime256v1, BIT STRING of 66 bytes).
+var p256SPKIPrefix = []byte{
+	0x30, 0x59, 0x30, 0x13, 0x06, 0x07, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x02, 0x01,
+	0x06, 0x08, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x03, 0x01, 0x07, 0x03, 0x42, 0x00,
+}
+
 func isP256SPKI(der []byte) bool {
-	if len(der) != 91 {
+	if len(der) != p256SPKILen {
 		return false
 	}
-	// Fixed SPKI prefix of an uncompressed P-256 key
-	prefix := []byte{
-		0x30, 0x59, 0x30, 0x13, 0x06, 0x07, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x02, 0x01,
-		0x06, 0x08, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x03, 0x01, 0x07, 0x03, 0x42, 0x00,
-	}
-	if subtle.ConstantTimeCompare(der[:26], prefix) != 1 {
+	if subtle.ConstantTimeCompare(der[:p256SPKIPrefixLen], p256SPKIPrefix) != 1 {
 		return false
 	}
-	return der[26] == 0x04
+	return der[p256SPKIPrefixLen] == uncompressedPoint
+}
+
+// signCount reads the 4-byte big-endian counter of authenticator data.
+func signCount(authData []byte) uint32 {
+	c := authData[signCountOffset:]
+	return uint32(c[0])<<24 | uint32(c[1])<<16 | uint32(c[2])<<8 | uint32(c[3])
 }
 
 // VerifyRegistration checks a Credential.RawResponse against the challenge the
@@ -119,11 +127,11 @@ func (rp RelyingParty) VerifyRegistration(rawResponse string, challenge []byte) 
 	}
 
 	rpIDHash := sha256.Sum256([]byte(rp.ID))
-	if subtle.ConstantTimeCompare(authData[:32], rpIDHash[:]) != 1 {
+	if subtle.ConstantTimeCompare(authData[:rpIDHashLen], rpIDHash[:]) != 1 {
 		return Registration{}, ErrRPIDMismatch
 	}
 
-	flags := authData[32]
+	flags := authData[flagsOffset]
 	if flags&flagUP == 0 {
 		return Registration{}, ErrUserNotPresent
 	}
@@ -138,20 +146,16 @@ func (rp RelyingParty) VerifyRegistration(rawResponse string, challenge []byte) 
 		return Registration{}, ErrUnsupportedAlg
 	}
 
-	// Attested credential data starts at byte 37
-	// AAGUID (16 bytes) -> starts at 37
-	// Credential ID length (2 bytes, big-endian) -> starts at 53
-	// Credential ID -> starts at 55
-	if len(authData) < 55 {
+	if len(authData) < credIDOffset {
 		return Registration{}, ErrMalformedResponse
 	}
 
-	credIDLen := int(authData[53])<<8 | int(authData[54])
-	if len(authData) < 55+credIDLen {
+	credIDLen := int(authData[credIDLenOffset])<<8 | int(authData[credIDLenOffset+1])
+	if len(authData) < credIDOffset+credIDLen {
 		return Registration{}, ErrMalformedResponse
 	}
 
-	attestedCredID := authData[55 : 55+credIDLen]
+	attestedCredID := authData[credIDOffset : credIDOffset+credIDLen]
 	rawIDBytes, err := base64.URLDecode(cred.RawID)
 	if err != nil {
 		return Registration{}, ErrMalformedResponse
@@ -170,12 +174,10 @@ func (rp RelyingParty) VerifyRegistration(rawResponse string, challenge []byte) 
 		return Registration{}, ErrBadPublicKey
 	}
 
-	signCount := uint32(authData[33])<<24 | uint32(authData[34])<<16 | uint32(authData[35])<<8 | uint32(authData[36])
-
 	return Registration{
 		CredentialID: rawIDBytes,
 		PublicKey:    spki,
-		SignCount:    signCount,
+		SignCount:    signCount(authData),
 	}, nil
 }
 
@@ -241,11 +243,11 @@ func (rp RelyingParty) VerifyAssertion(rawResponse string, challenge []byte, sto
 	}
 
 	rpIDHash := sha256.Sum256([]byte(rp.ID))
-	if subtle.ConstantTimeCompare(authData[:32], rpIDHash[:]) != 1 {
+	if subtle.ConstantTimeCompare(authData[:rpIDHashLen], rpIDHash[:]) != 1 {
 		return 0, ErrRPIDMismatch
 	}
 
-	flags := authData[32]
+	flags := authData[flagsOffset]
 	if flags&flagUP == 0 {
 		return 0, ErrUserNotPresent
 	}
@@ -268,7 +270,7 @@ func (rp RelyingParty) VerifyAssertion(rawResponse string, challenge []byte, sto
 		return 0, ErrBadSignature
 	}
 
-	newCount := uint32(authData[33])<<24 | uint32(authData[34])<<16 | uint32(authData[35])<<8 | uint32(authData[36])
+	newCount := signCount(authData)
 
 	if stored.SignCount != 0 || newCount != 0 {
 		if newCount <= stored.SignCount {
