@@ -2,8 +2,10 @@
 PLAN: "feat(server): UnverifiedChallenge — read the challenge of an assertion to find its stored copy (passkey login without a prior session)"
 EXECUTOR: jules
 REVIEWER: none
-STATUS: running
+STATUS: review
 SESSION: 7371189627170189096
+PR: https://github.com/webtyp/webauthn/pull/3
+REVIEWED_COMMIT: 0791a5cbda2d90e1bfc77cc266ad202c0b14d5e4
 ---
 
 > Read AGENTS.md at the repo root before any change.
@@ -22,11 +24,13 @@ plan (`webtyp/auth`) uses both and then calls `VerifyAssertion`, which checks ev
 
 ## Design gate (api-design)
 
-1. **Prior art.** `go-webauthn/webauthn` `FinishDiscoverableLogin` parses the response first
-   (`protocol.ParseCredentialRequestResponseBody`) and looks the session up before verifying;
-   SimpleWebAuthn (`verifyAuthenticationResponse`) takes `expectedChallenge` that the app looked up
-   from its own store; Yubico `java-webauthn-server` `finishAssertion` requires the request the app
-   stored. All read the response, find the stored challenge, then verify.
+1. **Prior art.** `go-webauthn/webauthn` (https://pkg.go.dev/github.com/go-webauthn/webauthn/webauthn):
+   `BeginDiscoverableLogin` returns a `SessionData` (with the challenge) that the app keeps — usually
+   in a server session tied to a cookie — and hands back to `FinishDiscoverableLogin`/`FinishPasskeyLogin`,
+   with a handler that finds the user from the credential's raw id and user handle. Here there is no
+   session before login, so the stored challenge is keyed by its own random, single-use value, which
+   this function reads; `VerifyAssertion` still checks it. (SimpleWebAuthn and Yubico's library were
+   not checked for this plan.)
 2. **Names.** `UnverifiedChallenge` pairs with the existing `UnverifiedCredentialID`; the
    `Unverified` prefix says "do not trust this".
 3. **Ledger.** Concepts +0 (same pattern as `UnverifiedCredentialID`), ways +0.
