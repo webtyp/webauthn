@@ -18,6 +18,8 @@ A passkey's private key never leaves the authenticator. During standard authenti
 
 The `webauthn/server` package provides verification of WebAuthn responses, ensuring that the relying party checks user presence, user verification, signature validity, and sign count. It supports ES256 only.
 
+Additionally, `server.UnverifiedCredentialID` and `server.UnverifiedChallenge` can be used to extract the credential ID and challenge from an unverified assertion. These do not verify the assertion, so you must read the credential ID and challenge, load the stored credential and issued challenge using them, and then pass them to `VerifyAssertion` for validation.
+
 ```go
 package main
 

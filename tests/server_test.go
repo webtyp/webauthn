@@ -239,6 +239,47 @@ func TestVerifyRegistration(t *testing.T) {
 	})
 }
 
+func TestUnverifiedChallenge_ReturnsClientDataChallenge(t *testing.T) {
+	_, privKey, _ := asym.GenerateKeyPair()
+	challenge := []byte("expected-challenge")
+	validRaw := buildGetResponse("iam.velty.cl", challenge, []byte("org"), privKey, 1, []byte("cred"), 0x05)
+
+	t.Run("returns challenge of a built assertion", func(t *testing.T) {
+		chal, err := server.UnverifiedChallenge(validRaw)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if string(chal) != string(challenge) {
+			t.Errorf("expected %q, got %q", challenge, chal)
+		}
+	})
+}
+
+func TestUnverifiedChallenge_Malformed(t *testing.T) {
+	t.Run("garbage base64", func(t *testing.T) {
+		_, err := server.UnverifiedChallenge("%%%")
+		if err != server.ErrMalformedResponse {
+			t.Errorf("expected ErrMalformedResponse, got %v", err)
+		}
+	})
+
+	t.Run("empty json", func(t *testing.T) {
+		_, err := server.UnverifiedChallenge(base64.URLEncode([]byte("{}")))
+		if err != server.ErrMalformedResponse {
+			t.Errorf("expected ErrMalformedResponse, got %v", err)
+		}
+	})
+
+	t.Run("empty clientDataJSON", func(t *testing.T) {
+		credJSON := `{"id":"cred","rawId":"cred","type":"public-key","response":{"clientDataJSON":"","authenticatorData":"","signature":""}}`
+		raw := base64.URLEncode([]byte(credJSON))
+		_, err := server.UnverifiedChallenge(raw)
+		if err != server.ErrMalformedResponse {
+			t.Errorf("expected ErrMalformedResponse, got %v", err)
+		}
+	})
+}
+
 func TestVerifyAssertion(t *testing.T) {
 	rp := server.RelyingParty{
 		ID:     "iam.velty.cl",
