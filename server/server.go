@@ -181,20 +181,43 @@ func (rp RelyingParty) VerifyRegistration(rawResponse string, challenge []byte) 
 	}, nil
 }
 
-// VerifyAssertion checks an Assertion.RawResponse against the issued challenge
-// and the stored credential, and returns the new sign count to store.
-func (rp RelyingParty) VerifyAssertion(rawResponse string, challenge []byte, stored StoredCredential) (uint32, error) {
+func decodeClientData(rawResponse string) (credentialJSON, clientData, error) {
 	jsonBytes, err := base64.URLDecode(rawResponse)
 	if err != nil {
-		return 0, ErrMalformedResponse
+		return credentialJSON{}, clientData{}, ErrMalformedResponse
 	}
 
 	var cred credentialJSON
 	if err := json.Decode(jsonBytes, &cred); err != nil {
-		return 0, ErrMalformedResponse
+		return credentialJSON{}, clientData{}, ErrMalformedResponse
 	}
 
-	if cred.RawID == "" || cred.Response.ClientDataJSON == "" || cred.Response.AuthenticatorData == "" || cred.Response.Signature == "" {
+	if cred.Response.ClientDataJSON == "" {
+		return credentialJSON{}, clientData{}, ErrMalformedResponse
+	}
+
+	clientDataJSONBytes, err := base64.URLDecode(cred.Response.ClientDataJSON)
+	if err != nil {
+		return credentialJSON{}, clientData{}, ErrMalformedResponse
+	}
+
+	var cdata clientData
+	if err := json.Decode(clientDataJSONBytes, &cdata); err != nil {
+		return credentialJSON{}, clientData{}, ErrMalformedResponse
+	}
+
+	return cred, cdata, nil
+}
+
+// VerifyAssertion checks an Assertion.RawResponse against the issued challenge
+// and the stored credential, and returns the new sign count to store.
+func (rp RelyingParty) VerifyAssertion(rawResponse string, challenge []byte, stored StoredCredential) (uint32, error) {
+	cred, cdata, err := decodeClientData(rawResponse)
+	if err != nil {
+		return 0, err
+	}
+
+	if cred.RawID == "" || cred.Response.AuthenticatorData == "" || cred.Response.Signature == "" {
 		return 0, ErrMalformedResponse
 	}
 
@@ -207,15 +230,7 @@ func (rp RelyingParty) VerifyAssertion(rawResponse string, challenge []byte, sto
 		return 0, ErrCredentialMismatch
 	}
 
-	clientDataJSONBytes, err := base64.URLDecode(cred.Response.ClientDataJSON)
-	if err != nil {
-		return 0, ErrMalformedResponse
-	}
-
-	var cdata clientData
-	if err := json.Decode(clientDataJSONBytes, &cdata); err != nil {
-		return 0, ErrMalformedResponse
-	}
+	clientDataJSONBytes, _ := base64.URLDecode(cred.Response.ClientDataJSON)
 
 	if cdata.Type != typeGet {
 		return 0, ErrWrongType
@@ -303,4 +318,25 @@ func UnverifiedCredentialID(rawResponse string) ([]byte, error) {
 	}
 
 	return rawIDBytes, nil
+}
+
+// UnverifiedChallenge returns the challenge bytes inside an Assertion.RawResponse
+// (clientDataJSON.challenge) WITHOUT verifying anything. Its only legitimate use is
+// finding the stored challenge to pass to VerifyAssertion; never trust it otherwise.
+func UnverifiedChallenge(rawResponse string) ([]byte, error) {
+	_, cdata, err := decodeClientData(rawResponse)
+	if err != nil {
+		return nil, err
+	}
+
+	if cdata.Challenge == "" {
+		return nil, ErrMalformedResponse
+	}
+
+	chalBytes, err := base64.URLDecode(cdata.Challenge)
+	if err != nil {
+		return nil, ErrMalformedResponse
+	}
+
+	return chalBytes, nil
 }
