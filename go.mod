@@ -6,7 +6,7 @@ require (
 	webtyp.com/await v0.1.2
 	webtyp.com/base64 v0.0.6
 	webtyp.com/crypto v0.0.30
-	webtyp.com/json v0.5.30
+	webtyp.com/json v0.5.37
 	webtyp.com/model v0.2.9
 )
 
