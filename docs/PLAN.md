@@ -2,6 +2,8 @@
 PLAN: "feat(server): UnverifiedChallenge — read the challenge of an assertion to find its stored copy (passkey login without a prior session)"
 EXECUTOR: jules
 REVIEWER: none
+STATUS: running
+SESSION: 7371189627170189096
 ---
 
 > Read AGENTS.md at the repo root before any change.
